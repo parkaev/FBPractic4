@@ -2,17 +2,22 @@ openapi: 3.0.0
 info:
   title: Admin Panel API
   version: 1.0.0
+  description: |
+    API для управления товарами с поддержкой REST, GraphQL и WebSocket
 
 servers:
   - url: http://localhost:3000
+    description: Основной REST API сервер
+  - url: ws://localhost:8000
+    description: WebSocket сервер для реального времени
 
 paths:
   /products:
     get:
-      summary: Get all products
+      summary: Получить все товары
       responses:
         200:
-          description: List of products
+          description: Список всех товаров
           content:
             application/json:
               schema:
@@ -20,23 +25,24 @@ paths:
                 items:
                   $ref: '#/components/schemas/Product'
     post:
-      summary: Create new product(s)
+      summary: Создать новый товар
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              oneOf:
-                - $ref: '#/components/schemas/Product'
-                - type: array
-                  items:
-                    $ref: '#/components/schemas/Product'
+              $ref: '#/components/schemas/Product'
       responses:
         201:
-          description: Product(s) created
+          description: Товар успешно создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+
   /products/{id}:
     put:
-      summary: Update product by ID
+      summary: Обновить товар по ID
       parameters:
         - name: id
           in: path
@@ -48,12 +54,22 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Product'
+
       responses:
         200:
-          description: Product updated
+          description: Товар обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        404:
+          description: Товар не найден
+          content:
+            application/json:
+              schema:
+
     delete:
-      summary: Delete product by ID
+      summary: Удалить товар по ID
       parameters:
         - name: id
           in: path
@@ -62,17 +78,69 @@ paths:
             type: integer
       responses:
         204:
-          description: Product deleted
+          description: Товар удален
+        404:
+          description: Товар не найден
+          content:
+            application/json:
+              schema:
+
+  /graphql:
+    post:
+      summary: Выполнить GraphQL операцию
+      description: |        
+        **Пример запроса:**
+        ```graphql
+        "query": "{ products(fields: [\"id\", \"name\"]) { id name } }",
+           "variables": {
+           "additionalProp1": {}
+         }
+        ```
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query:
+                  type: string
+                  description: GraphQL запрос
+                  example: "query { products { id name } }"
+                variables:
+                  type: object
+                  additionalProperties: true
+                  description: Параметры для запроса
+              required:
+                - query
+      responses:
+        200:
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    description: Результат запроса
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                    description: Ошибки выполнения
+                example:
+                  data:
+                    products:
+                      - id: 1
+                        name: "Пример товара"
+                        price: 100.0
 
 components:
   schemas:
     Product:
       type: object
-      required:
-        - name
-        - price
-        - description
-        - categories
       properties:
         id:
           type: integer
