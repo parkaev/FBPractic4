@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Каталог</title>
+    <link rel="stylesheet" type="text/css" href="/css/bootstrap.min.css" />
+    <style>
+        .card {
+            height: 100%;
+        }
+        .product-card {
+            margin-bottom: 20px;
+        }
+        .category-badge {
+            cursor: default;
+        }
+    </style>
+</head>
+<body class="bg-light">
+<div class="container py-5">
+    <h1 class="mb-4 text-center">Каталог товаров</h1>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="productsContainer"></div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', loadProducts);
+
+    async function loadProducts() {
+        try {
+            const response = await fetch('http://localhost:3000/products');
+            const products = await response.json();
+            updateProducts(products);
+        } catch (error) {
+            console.error('Ошибка загрузки товаров:', error);
+        }
+    }
+
+    function updateProducts(products) {
+        const container = document.getElementById('productsContainer');
+        container.innerHTML = '';
+
+        products.forEach(product => {
+            const card = `
+                <div class="col product-card">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">${product.name}</h5>
+                            <h6 class="card-subtitle mb-3 text-success">${product.price} ₽</h6>
+                            <p class="card-text">${product.description}</p>
+                            <div class="mt-auto">
+                                ${product.categories.map(c => `
+                                    <span class="badge bg-secondary category-badge">${c}</span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', card);
+        });
+    }
+</script>
+</body>
+</html>

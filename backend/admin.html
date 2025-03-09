@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Управление товарами</title>
+    <link rel="stylesheet" type="text/css" href="/css/bootstrap.min.css" />
+    <style>
+        .card { margin-bottom: 20px; }
+        .product-group { margin-bottom: 15px; border: 1px solid #ddd; padding: 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+<div class="container mt-5">
+    <h1 class="mb-4">Управление товарами</h1>
+
+    <!-- Добавление товаров -->
+    <div class="card">
+        <div class="card-header">
+            Добавление товаров
+        </div>
+        <div class="card-body">
+            <div id="productGroups">
+                <div class="product-group">
+                    <div class="mb-3">
+                        <input type="text" class="form-control" placeholder="Название товара" required>
+                    </div>
+                    <div class="mb-3">
+                        <textarea class="form-control" placeholder="Описание" rows="2"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <input type="number" class="form-control" placeholder="Цена" step="0.01" required>
+                        </div>
+                        <div class="col-md-6">
+                            <input type="number" class="form-control" placeholder="Количество" required>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <input type="text" class="form-control categories-input"
+                               placeholder="Категории (через запятую)">
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-success mt-3" onclick="addProducts()">Сохранить товары</button>
+            <button class="btn btn-secondary mt-3" onclick="addMoreFields()">Добавить еще</button>
+        </div>
+    </div>
+
+    <!-- Редактирование товара -->
+    <div class="card">
+        <div class="card-header">
+            Редактирование товара
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <input type="number" id="editId" class="form-control" placeholder="ID товара" required>
+            </div>
+            <div class="mb-3">
+                <input type="text" id="editName" class="form-control" placeholder="Новое название">
+            </div>
+            <div class="mb-3">
+                <textarea id="editDesc" class="form-control" placeholder="Новое описание" rows="2"></textarea>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <input type="number" id="editPrice" class="form-control" placeholder="Новая цена" step="0.01">
+                </div>
+                <div class="col-md-6">
+                    <input type="number" id="editQuantity" class="form-control" placeholder="Новое количество">
+                </div>
+            </div>
+            <div class="mb-3">
+                <input type="text" id="editCategories" class="form-control"
+                       placeholder="Новые категории (через запятую)">
+            </div>
+            <button class="btn btn-success mt-3" onclick="updateProduct()">Обновить товар</button>
+        </div>
+    </div>
+
+    <!-- Удаление товара -->
+    <div class="card">
+        <div class="card-header">
+            Удаление товара
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <input type="number" id="deleteId" class="form-control" placeholder="ID товара" required>
+            </div>
+            <button class="btn btn-danger" onclick="deleteProduct()">Удалить товар</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function addProducts() {
+        const groups = document.querySelectorAll('.product-group');
+
+        for (const group of groups) {
+            const inputs = group.querySelectorAll('input');
+            const textareas = group.querySelectorAll('textarea');
+
+            const name = inputs[0].value.trim();
+            const description = textareas[0].value.trim();
+            const price = parseFloat(inputs[1].value);
+            const categories = inputs[3].value.split(',')
+                .map(c => c.trim())
+                .filter(c => c.length > 0);
+
+            if (!name || isNaN(price)) {
+                console.log('Пропущен невалидный товар');
+                continue;
+            }
+
+            const productData = {
+                name: name,
+                price: price,
+                description: description,
+                categories: categories
+            };
+
+            try {
+                const response = await fetch('http://localhost:3000/products', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(productData)
+                });
+
+                if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+                console.log(`Товар "${name}" добавлен`);
+            } catch (error) {
+                console.error(`Ошибка при добавлении "${name}": ${error.message}`);
+            }
+        }
+    }
+
+    async function updateProduct() {
+        const id = document.getElementById('editId').value;
+        const categoriesInput = document.getElementById('editCategories').value;
+
+        const updateData = {
+            name: document.getElementById('editName').value.trim(),
+            description: document.getElementById('editDesc').value.trim(),
+            price: parseFloat(document.getElementById('editPrice').value),
+            categories: categoriesInput.split(',')
+                .map(c => c.trim())
+                .filter(c => c.length > 0)
+        };
+
+        if (!id) {
+            console.log('ID товара не указан');
+            return;
+        }
+
+        // Очистка пустых полей
+        Object.keys(updateData).forEach(key => {
+            if (updateData[key] === '' ||
+                (key === 'price' && isNaN(updateData[key]))) {
+                    delete updateData[key];
+            }
+        });
+
+        if (Object.keys(updateData).length === 0) {
+            console.log('Нет данных для обновления');
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:3000/products/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updateData)
+            });
+
+            if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+            console.log('Товар обновлен');
+        } catch (error) {
+            console.error(`Ошибка обновления: ${error.message}`);
+        }
+    }
+
+    async function deleteProduct() {
+        const id = document.getElementById('deleteId').value;
+
+        if (!id) {
+            console.log('ID товара не указан');
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:3000/products/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+            console.log('Товар удален');
+        } catch (error) {
+            console.error(`Ошибка удаления: ${error.message}`);
+        }
+    }
+
+    function addMoreFields() {
+        const newGroup = document.querySelector('.product-group').cloneNode(true);
+        newGroup.querySelectorAll('input, textarea').forEach(input => input.value = '');
+        document.getElementById('productGroups').appendChild(newGroup);
+    }
+</script>
+</body>
+</html>
