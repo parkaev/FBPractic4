@@ -112,6 +112,50 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
+// Grapghql
+const { createHandler } = require('graphql-http/lib/use/express');
+const { buildSchema } = require('graphql');
+
+// GraphQL-схема
+const schema = buildSchema(`
+    type Product {
+        id: ID!
+        name: String!
+        price: Float!
+        description: String
+        categories: [String]
+    }
+
+    type Query {
+        products(fields: [String]): [Product]
+        product(id: ID!): Product
+    }
+`);
+
+// Функции для обработки GraphQL-запросов (resolvers)
+const root = {
+    products: ({ fields }) => {
+        return tasks.map(product => {
+            if (!fields) return product; // Если fields не переданы, вернуть весь объект
+            let filteredProduct = {};
+            fields.forEach(field => {
+                if (product[field] !== undefined) {
+                    filteredProduct[field] = product[field];
+                }
+            });
+            return filteredProduct;
+        });
+    },
+    product: ({ id }) => tasks.find((product) => product.id == id),
+};
+
+// Добавляем GraphQL эндпоинт
+app.use('/graphql', createHandler({
+    schema,
+    rootValue: root
+}));
+
+
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });

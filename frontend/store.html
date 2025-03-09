@@ -26,10 +26,36 @@
 <script>
     document.addEventListener('DOMContentLoaded', loadProducts);
 
+    // async function loadProducts() {
+    //     try {
+    //         const response = await fetch('http://localhost:3000/products');
+    //         const products = await response.json();
+    //         updateProducts(products);
+    //     } catch (error) {
+    //         console.error('Ошибка загрузки товаров:', error);
+    //     }
+    // }
     async function loadProducts() {
         try {
-            const response = await fetch('http://localhost:3000/products');
-            const products = await response.json();
+            const query = `
+            {
+                products(fields: ["name", "price"]) {
+                    name
+                    price
+                }
+            }
+        `;
+
+            const response = await fetch('http://localhost:3000/graphql', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ query })
+            });
+
+            const result = await response.json();
+            const products = result.data.products;
             updateProducts(products);
         } catch (error) {
             console.error('Ошибка загрузки товаров:', error);
@@ -47,12 +73,6 @@
                         <div class="card-body">
                             <h5 class="card-title">${product.name}</h5>
                             <h6 class="card-subtitle mb-3 text-success">${product.price} ₽</h6>
-                            <p class="card-text">${product.description}</p>
-                            <div class="mt-auto">
-                                ${product.categories.map(c => `
-                                    <span class="badge bg-secondary category-badge">${c}</span>
-                                `).join('')}
-                            </div>
                         </div>
                     </div>
                 </div>
