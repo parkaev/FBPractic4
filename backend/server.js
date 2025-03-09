@@ -7,6 +7,8 @@ const fs = require('fs'); // Добавляем модуль для работы
 const swaggerJsDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 
+const WebSocket = require('ws')
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -154,6 +156,28 @@ app.use('/graphql', createHandler({
     schema,
     rootValue: root
 }));
+
+// WEB socet
+const wss = new WebSocket.Server({port: 8000});
+let a = []
+
+wss.on('connection', (ws) => {
+    console.log('Новое подключение');
+    a.forEach(message => {
+        ws.send(message);
+    });
+
+    ws.on('message', (message) => {
+        console.log('Получено сообщение:', message.toString());
+        a.push(message.toString());
+        // Рассылка сообщения всем клиентам
+        wss.clients.forEach((client) => {
+            if (client.readyState === WebSocket.OPEN) {
+                client.send(message.toString());
+            }
+        });
+    });
+});
 
 
 app.listen(PORT, () => {

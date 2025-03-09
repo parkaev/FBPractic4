@@ -15,6 +15,29 @@
         .category-badge {
             cursor: default;
         }
+        #chatWindow {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 300px;
+            max-height: 400px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 10px;
+            z-index: 9999;
+        }
+        #messages {
+            max-height: 250px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+        }
+        #messageInput {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body class="bg-light">
@@ -23,18 +46,30 @@
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="productsContainer"></div>
 </div>
 
+<div id="chatWindow">
+    <div id="messages"></div>
+    <input id="messageInput" type="text" class="form-control" placeholder="Введите сообщение" />
+    <button onclick="sendMessage()" class="btn btn-primary w-100">Отправить</button>
+</div>
+
+<script>
+    // Подключение к WebSocket
+    const ws = new WebSocket('ws://localhost:8000');
+
+    ws.onmessage = (event) => {
+        const messagesDiv = document.getElementById('messages');
+        messagesDiv.innerHTML += `<p>${event.data}</p>`;
+    };
+
+    function sendMessage() {
+        const input = document.getElementById('messageInput');
+        ws.send(input.value);
+        input.value = '';
+    }
+</script>
+
 <script>
     document.addEventListener('DOMContentLoaded', loadProducts);
-
-    // async function loadProducts() {
-    //     try {
-    //         const response = await fetch('http://localhost:3000/products');
-    //         const products = await response.json();
-    //         updateProducts(products);
-    //     } catch (error) {
-    //         console.error('Ошибка загрузки товаров:', error);
-    //     }
-    // }
     async function loadProducts() {
         try {
             const query = `
