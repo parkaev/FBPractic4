@@ -16,8 +16,8 @@
 `cd ..`
 
 ## 3️⃣ Подключение
-#### Клиентская часть (frontend)
-Находится по адрусу: [http://localhost:8080/](http://localhost:8080/)
-#### Админка (backend)
-Находится по адрусу: [http://localhost:3000/](http://localhost:3000/)  
+### Клиентская часть (frontend)
+Находится по адресу: [http://localhost:8080/](http://localhost:8080/)
+### Админка (backend)
+Находится по адресу: [http://localhost:3000/](http://localhost:3000/)  
 Документация к API (swagger): [http://localhost:3000/api-docs](http://localhost:3000/api-docs)
